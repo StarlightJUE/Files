@@ -1,4 +1,4 @@
-﻿// Copyright (c) Files Community
+// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using Files.App.Helpers.Application;
@@ -74,7 +74,7 @@ namespace Files.App.Helpers
 		public static AppEnvironment AppEnvironment =>
 			Enum.TryParse("cd_app_env_placeholder", true, out AppEnvironment appEnvironment)
 				? appEnvironment
-				: AppEnvironment.Dev;
+				: AppEnvironment.SideloadPreview;
 
 
 		/// <summary>
@@ -212,6 +212,13 @@ namespace Files.App.Helpers
 		/// </summary>
 		public static void ConfigureSentry()
 		{
+			if (string.IsNullOrEmpty(Constants.AutomatedWorkflowInjectionKeys.SentrySecret) ||
+				Constants.AutomatedWorkflowInjectionKeys.SentrySecret == "sentry.secret" ||
+				!Uri.TryCreate(Constants.AutomatedWorkflowInjectionKeys.SentrySecret, UriKind.Absolute, out _))
+			{
+				return;
+			}
+
 			SentrySdk.Init(options =>
 			{
 				options.Dsn = Constants.AutomatedWorkflowInjectionKeys.SentrySecret;

@@ -274,7 +274,11 @@ namespace Files.App
 				launchArgs.Arguments is not null &&
 				CommandLineParser.SplitArguments(launchArgs.Arguments, true).FirstOrDefault() is string arg0 &&
 				(arg0.EndsWith($"files-dev.exe", StringComparison.OrdinalIgnoreCase) ||
-				arg0.EndsWith($"files-dev", StringComparison.OrdinalIgnoreCase)) ? launchArgs.Arguments : null;
+				arg0.EndsWith($"files-dev", StringComparison.OrdinalIgnoreCase) ||
+				arg0.EndsWith($"files-preview.exe", StringComparison.OrdinalIgnoreCase) ||
+				arg0.EndsWith($"files-preview", StringComparison.OrdinalIgnoreCase) ||
+				arg0.EndsWith($"files.exe", StringComparison.OrdinalIgnoreCase) ||
+				arg0.EndsWith($"files", StringComparison.OrdinalIgnoreCase)) ? launchArgs.Arguments : null;
 			var cmdProtocolArgs = activatedArgs.Data is IProtocolActivatedEventArgs protocolArgs &&
 				protocolArgs.Uri.Query.TrimStart('?').Split('=') is string[] parsedArgs &&
 				parsedArgs.Length == 2 && parsedArgs[0] == "cmd" ? Uri.UnescapeDataString(parsedArgs[1]) : null;

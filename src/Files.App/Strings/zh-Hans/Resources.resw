@@ -333,8 +333,14 @@
   <data name="LightTheme" xml:space="preserve">
     <value>浅色</value>
   </data>
+  <data name="LightThemeLabel" xml:space="preserve">
+    <value>浅色主题</value>
+  </data>
   <data name="DarkTheme" xml:space="preserve">
     <value>深色</value>
+  </data>
+  <data name="DarkThemeLabel" xml:space="preserve">
+    <value>深色主题</value>
   </data>
   <data name="DefaultTheme" xml:space="preserve">
     <value>系统主题</value>

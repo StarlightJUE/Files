@@ -972,7 +972,7 @@
 												Height="10"
 												HorizontalAlignment="Left"
 												VerticalAlignment="Bottom"
-												x:Load="{x:Bind IsShortcut}">
+												x:Load="False">
 												<controls:ThemedIcon Style="{StaticResource App.ThemedIcons.Shortcut}" />
 											</Viewbox>
 											<Image

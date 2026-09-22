@@ -1,4 +1,4 @@
-﻿<!--  Copyright (c) Files Community. Licensed under the MIT License.  -->
+<!--  Copyright (c) Files Community. Licensed under the MIT License.  -->
 <UserControl
 	x:Class="Files.App.UserControls.NavigationToolbar"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -381,7 +381,7 @@
 									Height="10"
 									HorizontalAlignment="Left"
 									VerticalAlignment="Bottom"
-									x:Load="{x:Bind IsShortcut}">
+									x:Load="False">
 									<controls:ThemedIcon Style="{StaticResource App.ThemedIcons.Shortcut}" />
 								</Viewbox>
 							</Grid>

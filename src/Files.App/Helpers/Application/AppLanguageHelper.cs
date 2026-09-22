@@ -1,4 +1,4 @@
-﻿// Copyright (c) Files Community
+// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using System.Globalization;
@@ -66,7 +66,7 @@ namespace Files.App.Helpers
 			if (appLanguages.Select(lang => lang.Name.Contains(systemLanguage.Name)).Any())
 				appLanguages[0] = systemLanguage;
 			else
-				appLanguages[0] = new("en-US", systemDefault: true);
+				appLanguages[0] = new("zh-Hans", systemDefault: true);
 
 			// Initialize the list
 			SupportedLanguages = new(appLanguages);

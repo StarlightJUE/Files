@@ -1,4 +1,4 @@
-﻿// Copyright (c) Files Community
+// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using System.Threading;
@@ -21,7 +21,7 @@ namespace Files.Core.SourceGenerator.Generators
 		public void Initialize(IncrementalGeneratorInitializationContext context)
 		{
 			var additionalFiles = context
-				.AdditionalTextsProvider.Where(af => af.Path.Contains("en-US\\Resources"));
+				.AdditionalTextsProvider.Where(af => af.Path.EndsWith("Resources.resw", StringComparison.OrdinalIgnoreCase));
 
 			context.RegisterSourceOutput(additionalFiles, Execute);
 

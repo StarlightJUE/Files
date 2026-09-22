@@ -159,7 +159,7 @@ namespace Files.App
 
 				// Configure Sentry
 				if (AppLifecycleHelper.AppEnvironment is not AppEnvironment.Dev)
-					AppLifecycleHelper.ConfigureSentry();
+					SafetyExtensions.IgnoreExceptions(AppLifecycleHelper.ConfigureSentry);
 
 				var userSettingsService = Ioc.Default.GetRequiredService<IUserSettingsService>();
 				var isLeaveAppRunning = userSettingsService.GeneralSettingsService.LeaveAppRunning;

@@ -1,9 +1,9 @@
-﻿<!--  Copyright (c) Files Community. Licensed under the MIT License.  -->
+<!--  Copyright (c) Files Community. Licensed under the MIT License.  -->
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>$(WindowsTargetFramework)</TargetFramework>
-        <DefaultLanguage>en-US</DefaultLanguage>
+        <DefaultLanguage>zh-Hans</DefaultLanguage>
         <TargetPlatformMinVersion>$(MinimalWindowsVersion)</TargetPlatformMinVersion>
         <IsTrimmable>true</IsTrimmable>
         <Configurations>Debug;Release</Configurations>

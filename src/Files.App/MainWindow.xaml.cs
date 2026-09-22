@@ -67,6 +67,10 @@ namespace Files.App
 					if (launchArgs.Arguments is not null &&
 						(CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-dev.exe", StringComparison.OrdinalIgnoreCase)
 						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-dev", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-preview.exe", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-preview", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files.exe", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files", StringComparison.OrdinalIgnoreCase)
 						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].Equals(Path.Join(Package.Current.InstalledLocation.Path, "Files.exe"), StringComparison.OrdinalIgnoreCase)))
 					{
 						// WINUI3: When launching from commandline the argument is not ICommandLineActivatedEventArgs (#10370)
@@ -96,7 +100,10 @@ namespace Files.App
 					break;
 
 				case IProtocolActivatedEventArgs eventArgs:
-					if (eventArgs.Uri.AbsoluteUri == "files-dev:")
+					if (string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files-dev:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files-preview:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query))
 					{
 						rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
 
@@ -108,42 +115,50 @@ namespace Files.App
 					}
 					else
 					{
-						var parsedArgs = eventArgs.Uri.Query.TrimStart('?').Split('=');
-						var unescapedValue = Uri.UnescapeDataString(parsedArgs[1].Split('&')[0]);
-						if (parsedArgs[0] == "tab" && parsedArgs.Length > 3 &&
-							int.TryParse(parsedArgs[2].Split('&')[0], out var dx) &&
-							int.TryParse(parsedArgs[3], out var dy))
-							AppWindow?.Move(new(dx - 100, dy - 16));
-						var folderResult = await FilesystemTasks.Wrap(() => StorageFolder.GetFolderFromPathAsync(unescapedValue).AsTask());
-						if (folderResult.Result is { } folder && !string.IsNullOrEmpty(folder.Path))
+						var query = eventArgs.Uri.Query.TrimStart('?');
+						var parsedArgs = query.Split('=');
+						if (parsedArgs.Length > 1)
 						{
-							// Convert short name to long name (#6190)
-							unescapedValue = folder.Path;
-						}
-						switch (parsedArgs[0])
-						{
-							case "tab":
-								rootFrame.Navigate(typeof(MainPage),
-									new MainPageNavigationArguments() { Parameter = TabBarItemParameter.Deserialize(unescapedValue), IgnoreStartupSettings = true },
-									new SuppressNavigationTransitionInfo());
-								break;
+							var unescapedValue = Uri.UnescapeDataString(parsedArgs[1].Split('&')[0]);
+							if (parsedArgs[0] == "tab" && parsedArgs.Length > 3 &&
+								int.TryParse(parsedArgs[2].Split('&')[0], out var dx) &&
+								int.TryParse(parsedArgs[3], out var dy))
+								AppWindow?.Move(new(dx - 100, dy - 16));
+							var folderResult = await FilesystemTasks.Wrap(() => StorageFolder.GetFolderFromPathAsync(unescapedValue).AsTask());
+							if (folderResult.Result is { } folder && !string.IsNullOrEmpty(folder.Path))
+							{
+								// Convert short name to long name (#6190)
+								unescapedValue = folder.Path;
+							}
+							switch (parsedArgs[0])
+							{
+								case "tab":
+									rootFrame.Navigate(typeof(MainPage),
+										new MainPageNavigationArguments() { Parameter = TabBarItemParameter.Deserialize(unescapedValue), IgnoreStartupSettings = true },
+										new SuppressNavigationTransitionInfo());
+									break;
 
-							case "folder":
-								rootFrame.Navigate(typeof(MainPage),
-									new MainPageNavigationArguments() { Parameter = unescapedValue, IgnoreStartupSettings = true },
-									new SuppressNavigationTransitionInfo());
-								break;
+								case "folder":
+									rootFrame.Navigate(typeof(MainPage),
+										new MainPageNavigationArguments() { Parameter = unescapedValue, IgnoreStartupSettings = true },
+										new SuppressNavigationTransitionInfo());
+									break;
 
-							case "cmd":
-								var ppm = CommandLineParser.ParseUntrustedCommands(unescapedValue);
-								if (ppm.IsEmpty())
+								case "cmd":
+									var ppm = CommandLineParser.ParseUntrustedCommands(unescapedValue);
+									if (ppm.IsEmpty())
+										rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
+									else
+										await InitializeFromCmdLineArgsAsync(rootFrame, ppm, Environment.CurrentDirectory);
+									break;
+								default:
 									rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
-								else
-									await InitializeFromCmdLineArgsAsync(rootFrame, ppm, Environment.CurrentDirectory);
-								break;
-							default:
-								rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
-								break;
+									break;
+							}
+						}
+						else
+						{
+							rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
 						}
 					}
 					break;
