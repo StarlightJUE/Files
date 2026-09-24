@@ -16,7 +16,7 @@ namespace Files.App.Data.Items
 		public double UserLengthPixels
 		{
 			get => UserLength.Value;
-			set => UserLength = new GridLength(Math.Max(NormalMinLength, value), GridUnitType.Pixel);
+			set => UserLength = new GridLength(IsResizable ? Math.Max(NormalMinLength, value) : value, GridUnitType.Pixel);
 		}
 
 		private double _NormalMaxLength = 800;
@@ -94,7 +94,7 @@ namespace Files.App.Data.Items
 			get => _UserLength;
 			set
 			{
-				var clampedLength = value.GridUnitType == GridUnitType.Pixel
+				var clampedLength = value.GridUnitType == GridUnitType.Pixel && IsResizable
 					? new GridLength(Math.Clamp(value.Value, NormalMinLength, NormalMaxLength), GridUnitType.Pixel)
 					: value;
 

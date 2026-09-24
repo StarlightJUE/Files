@@ -30,6 +30,8 @@ namespace Files.App.Data.Models
 		private DetailsLayoutColumnItem iconColumn = new()
 		{
 			UserLength = new GridLength(24, GridUnitType.Pixel),
+			NormalMinLength = 0d,
+			NormalMaxLength = 64d,
 			IsResizable = false,
 		};
 

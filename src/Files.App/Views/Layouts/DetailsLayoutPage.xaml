@@ -420,7 +420,6 @@
 								<ColumnDefinition
 									x:Name="Column2"
 									Width="{x:Bind ColumnsViewModel.IconColumn.Length, Mode=OneWay}"
-									MinWidth="{x:Bind ColumnsViewModel.IconColumn.MinLength, Mode=OneWay}"
 									MaxWidth="{x:Bind ColumnsViewModel.IconColumn.MaxLength, Mode=OneWay}" />
 
 								<!--  (Divider)  -->

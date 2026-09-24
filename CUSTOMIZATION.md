@@ -144,7 +144,7 @@
   1. **`GridSplitter.Helper.cs`**：解除 `newWidth > ActualWidth` 的死锁限制，向右拉大时无论当前宽度多小均允许生效；并以 `ColumnDefinition.MinWidth` 为安全下限。
   2. **`DetailsLayoutPage.xaml`**：所有列均添加 `MinWidth="{x:Bind ColumnsViewModel.<Col>.MinLength, Mode=OneWay}"` 强约束。
   3. **`LayoutSettingsService.cs`**：增加 `GetColumnWidth` / `SetColumnWidth` 守卫方法，若读取到小于等于 10px 的异常值，自动回退到默认标准列宽（如 Name 240px、DateModified 200px、Size 100px），写入时强制保证不小于 50~80px。
-  4. **`DetailsLayoutColumnItem.cs` & `ColumnsViewModel.cs`**：在 `UserLength` / `UserLengthPixels` 的 Setter 中加入 `Math.Clamp(value, NormalMinLength, NormalMaxLength)` 强制防护，并将文件名列的 `NormalMinLength` 提升为 80px。
+  4. **`DetailsLayoutColumnItem.cs` & `ColumnsViewModel.cs`**：在 `UserLength` / `UserLengthPixels` 的 Setter 中加入 `Math.Clamp(value, NormalMinLength, NormalMaxLength)` 强制防护（仅对 `IsResizable == true` 的列生效，避免将 20px 固定图标列错误拉大到 50px 导致图标异常放大与复选框缩进错位），并将文件名列的 `NormalMinLength` 提升为 80px。
   5. **`DetailsLayoutPage.xaml.cs`**：修正 `MeasureColumnEstimate` 的列索引（16 对应状态列），移除 `columnSizeToFit > 1` 限制，确保无论在任何状态下双击分隔条或自适应列宽均可恢复正常尺寸。
 
 ---
