@@ -1,9 +1,11 @@
 // Copyright (c) Files Community
 // Licensed under the MIT License.
 
+using Microsoft.Extensions.Logging;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Specialized;
+using System.Threading;
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
@@ -35,6 +37,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 
 		// TODO: Replace with IMutableFolder.GetWatcherAsync() once it gets implemented in IWindowsStorable
 		private readonly SystemIO.FileSystemWatcher? _quickAccessFolderWatcher;
+		private readonly SemaphoreSlim _refreshLock = new(1, 1);
 		private bool isDisposed;
 
 		// Constructor
@@ -71,29 +74,51 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				await RefreshWidgetAsync();
 		}
 
-		public Task RefreshWidgetAsync()
+		public async Task RefreshWidgetAsync()
 		{
-			return MainWindow.Instance.DispatcherQueue.EnqueueOrInvokeAsync(async () =>
+			await _refreshLock.WaitAsync();
+			try
 			{
-				foreach (var item in Items)
-					item.Dispose();
-
-				Items.Clear();
+				var newCardItems = new List<WidgetFolderCardItem>();
+				var seenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 				await foreach (IWindowsStorable folder in HomePageContext.HomeFolder.GetQuickAccessFolderAsync(default))
 				{
+					var path = folder.GetDisplayName(SIGDN.SIGDN_DESKTOPABSOLUTEPARSING);
+					var key = !string.IsNullOrEmpty(path) ? path : folder.Id;
+					if (!string.IsNullOrEmpty(key) && !seenKeys.Add(key))
+						continue;
+
 					folder.GetPropertyValue<bool>("System.Home.IsPinned", out var isPinned);
 					var tooltip = await STATask.RunPooled(() => folder.TryGetShellTooltip(out var t).Succeeded ? t : null, App.Logger);
 
-					Items.Insert(
-						Items.Count,
+					newCardItems.Add(
 						new WidgetFolderCardItem(
 							folder,
 							folder.GetDisplayName(SIGDN.SIGDN_PARENTRELATIVEFORUI),
 							isPinned,
 							tooltip ?? string.Empty));
 				}
-			});
+
+				await MainWindow.Instance.DispatcherQueue.EnqueueOrInvokeAsync(() =>
+				{
+					foreach (var item in Items)
+						item.Dispose();
+
+					Items.Clear();
+
+					foreach (var cardItem in newCardItems)
+						Items.Add(cardItem);
+				});
+			}
+			catch (Exception ex)
+			{
+				App.Logger.LogWarning(ex, "Failed to refresh quick access widget.");
+			}
+			finally
+			{
+				_refreshLock.Release();
+			}
 		}
 
 		public override List<ContextMenuFlyoutItemViewModel> GetItemMenuItems(WidgetCardItem item, bool isPinned, bool isFolder = false)
@@ -338,6 +363,8 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				_quickAccessFolderWatcher.Changed -= QuickAccessFolderWatcher_Changed;
 				_quickAccessFolderWatcher.Dispose();
 			}
+
+			_refreshLock.Dispose();
 
 			foreach (var item in Items)
 				item.Dispose();

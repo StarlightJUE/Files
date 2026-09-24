@@ -66,7 +66,7 @@ namespace Files.App.Views
 			{
 				try
 				{
-					return !AppModel.IsMainWindowClosed && MainWindow.Instance.Bounds.Width > Constants.UI.MultiplePaneWidthThreshold;
+					return !AppModel.IsMainWindowClosed && (MainWindow.Instance.Bounds.Width == 0 || MainWindow.Instance.Bounds.Width > Constants.UI.MultiplePaneWidthThreshold);
 				}
 				catch
 				{
@@ -125,7 +125,7 @@ namespace Files.App.Views
 							RemovePane(1);
 						}
 					}
-					else if (_wasRightPaneVisible)
+					else if (_wasRightPaneVisible || (GeneralSettingsService.AlwaysOpenDualPaneInNewTab && GetPaneCount() == 1))
 					{
 						// Add back pane
 						if (GetPaneCount() == 1)
@@ -135,6 +135,10 @@ namespace Files.App.Views
 						{
 							NavParamsRight = _savedNavParamsRight;
 							_savedNavParamsRight = null;
+						}
+						else if (NavParamsRight is null || string.IsNullOrEmpty(NavParamsRight.NavPath))
+						{
+							NavParamsRight = new() { NavPath = "Home" };
 						}
 
 						_wasRightPaneVisible = false;
@@ -276,7 +280,7 @@ namespace Files.App.Views
 
 			try
 			{
-				_WindowIsCompact = MainWindow.Instance.Bounds.Width <= Constants.UI.MultiplePaneWidthThreshold;
+				_WindowIsCompact = MainWindow.Instance.Bounds.Width > 0 && MainWindow.Instance.Bounds.Width <= Constants.UI.MultiplePaneWidthThreshold;
 				MainWindow.Instance.SizeChanged += MainWindow_SizeChanged;
 			}
 			catch (Exception)
@@ -639,6 +643,11 @@ namespace Files.App.Views
 			{
 				NavParamsLeft = new() { NavPath = navPath };
 				NavParamsRight = new() { NavPath = "Home" };
+
+				if (GetPaneCount() is 1 &&
+					IsMultiPaneAvailable &&
+					GeneralSettingsService.AlwaysOpenDualPaneInNewTab)
+					AddPane();
 			}
 			else if (eventArgs.Parameter is PaneNavigationArguments paneArgs)
 			{
@@ -651,12 +660,12 @@ namespace Files.App.Views
 				// Creates new pane
 				if (GetPaneCount() is 1 &&
 					IsMultiPaneAvailable &&
-					paneArgs.RightPaneNavPathParam is not null)
+					(paneArgs.RightPaneNavPathParam is not null || GeneralSettingsService.AlwaysOpenDualPaneInNewTab))
 					AddPane();
 
 				NavParamsRight = new()
 				{
-					NavPath = paneArgs.RightPaneNavPathParam,
+					NavPath = paneArgs.RightPaneNavPathParam ?? (GeneralSettingsService.AlwaysOpenDualPaneInNewTab ? "Home" : null),
 					SelectItem = paneArgs.RightPaneSelectItemParam
 				};
 
@@ -932,7 +941,7 @@ namespace Files.App.Views
 
 		private void MainWindow_SizeChanged(object sender, WindowSizeChangedEventArgs e)
 		{
-			WindowIsCompact = MainWindow.Instance.Bounds.Width <= Constants.UI.MultiplePaneWidthThreshold;
+			WindowIsCompact = MainWindow.Instance.Bounds.Width > 0 && MainWindow.Instance.Bounds.Width <= Constants.UI.MultiplePaneWidthThreshold;
 		}
 
 		[DynamicWindowsRuntimeCast(typeof(UIElement))]

@@ -314,7 +314,7 @@ namespace Files.App
 				{
 					LeftPaneNavPathParam = payload,
 					LeftPaneSelectItemParam = selectItem,
-					RightPaneNavPathParam = boundsWidth > Constants.UI.MultiplePaneWidthThreshold && (generalSettingsService?.AlwaysOpenDualPaneInNewTab ?? false) ? "Home" : null,
+					RightPaneNavPathParam = (boundsWidth == 0 || boundsWidth > Constants.UI.MultiplePaneWidthThreshold) && (generalSettingsService?.AlwaysOpenDualPaneInNewTab ?? false) ? "Home" : null,
 				};
 
 				if (rootFrame.Content is MainPage && MainPageViewModel.AppInstances.Any())
