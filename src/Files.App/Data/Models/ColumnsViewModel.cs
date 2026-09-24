@@ -84,6 +84,7 @@ namespace Files.App.Data.Models
 
 		private DetailsLayoutColumnItem nameColumn = new()
 		{
+			NormalMinLength = 80d,
 			NormalMaxLength = 1000d
 		};
 		public DetailsLayoutColumnItem NameColumn

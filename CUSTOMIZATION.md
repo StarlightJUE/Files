@@ -24,6 +24,7 @@
 | **语言裁剪 (仅保留中文)** | `src/Files.App/Strings/` (删除48个外语目录)<br>`src/Files.Core.SourceGenerator/Generators/StringsPropertyGenerator.cs`<br>`src/Files.App/Strings/zh-Hans/Resources.resw`<br>`src/Files.App/Helpers/Application/AppLanguageHelper.cs`<br>主应用与各相关 `.csproj` | 彻底移除所有非简体中文资源；修改生成器以 `zh-Hans` 生成强类型资源代码；补齐 `zh-Hans` 缺失的两个 Theme 字符串键；默认语言设为 `zh-Hans`。 |
 | **UI去快捷方式箭头** | `src/Files.App.Controls/ThemedIcon/Styles/Icons.Common.xaml`<br>`src/Files.App/Views/Layouts/DetailsLayoutPage.xaml`<br>`src/Files.App/Views/Layouts/GridLayoutPage.xaml`<br>`src/Files.App/Views/Layouts/ColumnLayoutPage.xaml`<br>`src/Files.App/UserControls/NavigationToolbar.xaml` | 隐藏或不加载文件/文件夹左下角快捷方式小箭头，界面更加干净整洁。 |
 | **默认管理器 (Win+E) 修复** | `src/Files.App/Package.appxmanifest`<br>`src/Files.App/ViewModels/Settings/AdvancedViewModel.cs` | 增加 `files-dev.exe` 别名满足官方启动器检查；改用 C# 原生文件 API 落地 Launcher，彻底修复 Win+E 报“未找到应用程序”。 |
+| **详细信息列宽与拖拽死锁修复** | `src/Files.App.Controls/GridSplitter/GridSplitter.Helper.cs`<br>`src/Files.App/Data/Items/DetailsLayoutColumnItem.cs`<br>`src/Files.App/Data/Models/ColumnsViewModel.cs`<br>`src/Files.App/Services/Settings/LayoutSettingsService.cs`<br>`src/Files.App/Views/Layouts/DetailsLayoutPage.xaml`<br>`src/Files.App/Views/Layouts/DetailsLayoutPage.xaml.cs` | 彻底解决详细信息视图中列宽被挤压为 1 像素导致文件名折叠且分割条无法拖动的死锁 BUG：解除 GridSplitter 的 `<= ActualWidth` 限制、配置读写与模型增加 50~80px 安全下限保护、XAML ColumnDefinition 强制绑定 MinWidth、修复自适应列宽误将大小列当成状态列返回极小宽度的计算 BUG。 |
 
 ---
 
@@ -128,6 +129,23 @@
 - **踩坑 2：官方预编译 Launcher 硬编码检测 `files-dev.exe`**
   - **原因**：官方自带的 `Files.App.Launcher.exe` 是预编译原生 C++ 程序，启动时会检查 `%LOCALAPPDATA%\Microsoft\WindowsApps\files-dev.exe`。若检测失败会弹窗并自动回滚注册表。但我们使用的是 Preview 风格配置，此前只注册了 `files-preview.exe`。
   - **修复**：在 `Package.appxmanifest` 的 `<uap5:AppExecutionAlias>` 中同时注册 `files-preview.exe`、`files-dev.exe` 和 `files.exe`，满足 Launcher 校验并实现多别名兼容。
+
+---
+
+### 2.6 详细信息列宽塌陷 (1px) 与分割条拖拽死锁修复
+- **现象**：
+  在详细信息视图（Details Layout）下，文件名称及其他列仅剩 1 像素，文件名被彻底折叠遮挡，整行只剩图标可见；上方表头的分割条（GridSplitter）鼠标按住无法拖宽，双击或自适应也无法恢复；通过 `Ctrl + 滚轮` 放大视图可以看清（因为滚轮将视图切换到了网格/卡片模式）。
+- **根因分析**：
+  1. **GridSplitter 拖拽死锁（Deadlock）**：在 `GridSplitter.Helper.cs` 中，拖动判定条件为 `if (newWidth > ActualWidth)`，这里的 `ActualWidth` 为 Splitter 自身宽度（12px）。若列宽因故萎缩至 `<= 12px`（如 1px），鼠标单次拖动增量（1~3px）导致 `newWidth` 永远无法跨越 12px，使 `SetColumnWidth` 永远返回 `false`，从而彻底卡死无法向右拖大。
+  2. **缺少最小列宽绑定**：`DetailsLayoutPage.xaml` 中的表头 `ColumnDefinition` 均未绑定 `MinWidth`，布局系统与拖拽逻辑均没有下限拦截。
+  3. **自适应列宽（AutoFit）索引错位**：`DetailsLayoutPage.xaml.cs` 的 `MeasureColumnEstimate` 将列索引 15 误当成同步状态列（实际 15 是 `ItemSize` 文件大小列，16 才是同步状态），直接把大小字符长度（如 1~4）作为像素宽度返回；且 `if (columnSizeToFit > 1)` 会直接跳过极小宽度，导致无法重置自适应。
+  4. **配置反序列化缺乏防灾兜底**：一旦本地配置 `user_settings.json` 被写入了 `NameColumnWidth: 1`，应用启动时会直接加载该坏值，且无自我纠正机制。
+- **全链路修复**：
+  1. **`GridSplitter.Helper.cs`**：解除 `newWidth > ActualWidth` 的死锁限制，向右拉大时无论当前宽度多小均允许生效；并以 `ColumnDefinition.MinWidth` 为安全下限。
+  2. **`DetailsLayoutPage.xaml`**：所有列均添加 `MinWidth="{x:Bind ColumnsViewModel.<Col>.MinLength, Mode=OneWay}"` 强约束。
+  3. **`LayoutSettingsService.cs`**：增加 `GetColumnWidth` / `SetColumnWidth` 守卫方法，若读取到小于等于 10px 的异常值，自动回退到默认标准列宽（如 Name 240px、DateModified 200px、Size 100px），写入时强制保证不小于 50~80px。
+  4. **`DetailsLayoutColumnItem.cs` & `ColumnsViewModel.cs`**：在 `UserLength` / `UserLengthPixels` 的 Setter 中加入 `Math.Clamp(value, NormalMinLength, NormalMaxLength)` 强制防护，并将文件名列的 `NormalMinLength` 提升为 80px。
+  5. **`DetailsLayoutPage.xaml.cs`**：修正 `MeasureColumnEstimate` 的列索引（16 对应状态列），移除 `columnSizeToFit > 1` 限制，确保无论在任何状态下双击分隔条或自适应列宽均可恢复正常尺寸。
 
 ---
 

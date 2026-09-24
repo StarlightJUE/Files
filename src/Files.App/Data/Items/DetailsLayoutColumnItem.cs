@@ -1,4 +1,4 @@
-﻿// Copyright (c) Files Community
+// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using Microsoft.UI.Xaml;
@@ -16,7 +16,7 @@ namespace Files.App.Data.Items
 		public double UserLengthPixels
 		{
 			get => UserLength.Value;
-			set => UserLength = new GridLength(value, GridUnitType.Pixel);
+			set => UserLength = new GridLength(Math.Max(NormalMinLength, value), GridUnitType.Pixel);
 		}
 
 		private double _NormalMaxLength = 800;
@@ -94,7 +94,11 @@ namespace Files.App.Data.Items
 			get => _UserLength;
 			set
 			{
-				if (SetProperty(ref _UserLength, value))
+				var clampedLength = value.GridUnitType == GridUnitType.Pixel
+					? new GridLength(Math.Clamp(value.Value, NormalMinLength, NormalMaxLength), GridUnitType.Pixel)
+					: value;
+
+				if (SetProperty(ref _UserLength, clampedLength))
 				{
 					OnPropertyChanged(nameof(Length));
 					OnPropertyChanged(nameof(LengthPixels));
@@ -159,13 +163,13 @@ namespace Files.App.Data.Items
 
 		public void Update(DetailsLayoutColumnItem other)
 		{
-			UserLengthPixels = other.UserLengthPixels;
+			NormalMinLength = other.NormalMinLength;
 			NormalMaxLength = other.NormalMaxLength;
 			UserCollapsed = other.UserCollapsed;
 			IsResizable = other.IsResizable;
 			IsHidden = other.IsHidden;
-			NormalMinLength = other.NormalMinLength;
 			UserLength = other.UserLength;
+			UserLengthPixels = other.UserLengthPixels;
 		}
 	}
 }

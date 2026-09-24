@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 namespace Files.App.Controls
@@ -20,10 +20,13 @@ namespace Files.App.Controls
 
 		private bool SetColumnWidth(ColumnDefinition columnDefinition, double horizontalChange, GridUnitType unitType)
 		{
+			var minWidth = !double.IsNaN(columnDefinition.MinWidth) && columnDefinition.MinWidth > 0
+				? columnDefinition.MinWidth
+				: ActualWidth;
+
 			var newWidth = columnDefinition.ActualWidth + horizontalChange;
 
-			var minWidth = columnDefinition.MinWidth;
-			if (!double.IsNaN(minWidth) && newWidth < minWidth)
+			if (newWidth < minWidth)
 			{
 				newWidth = minWidth;
 			}
@@ -34,7 +37,7 @@ namespace Files.App.Controls
 				newWidth = maxWidth;
 			}
 
-			if (newWidth > ActualWidth)
+			if (Math.Abs(columnDefinition.ActualWidth - newWidth) > 0.001 || horizontalChange > 0)
 			{
 				columnDefinition.Width = new GridLength(newWidth, unitType);
 				return true;
@@ -45,21 +48,19 @@ namespace Files.App.Controls
 
 		private bool IsValidColumnWidth(ColumnDefinition columnDefinition, double horizontalChange)
 		{
+			var minWidth = !double.IsNaN(columnDefinition.MinWidth) && columnDefinition.MinWidth > 0
+				? columnDefinition.MinWidth
+				: ActualWidth;
+
 			var newWidth = columnDefinition.ActualWidth + horizontalChange;
 
-			var minWidth = columnDefinition.MinWidth;
-			if (!double.IsNaN(minWidth) && newWidth < minWidth)
+			if (newWidth < minWidth && horizontalChange < 0)
 			{
 				return false;
 			}
 
 			var maxWidth = columnDefinition.MaxWidth;
-			if (!double.IsNaN(maxWidth) && newWidth > maxWidth)
-			{
-				return false;
-			}
-
-			if (newWidth <= ActualWidth)
+			if (!double.IsNaN(maxWidth) && newWidth > maxWidth && horizontalChange > 0)
 			{
 				return false;
 			}
