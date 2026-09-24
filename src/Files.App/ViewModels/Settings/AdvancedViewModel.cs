@@ -55,40 +55,57 @@ namespace Files.App.ViewModels.Settings
 			if (IsSetAsDefaultFileManager == DetectIsSetAsDefaultFileManager())
 				return;
 
+			var installedAssetsFolder = Path.Combine(Package.Current.InstalledLocation.Path, "Assets", "FilesOpenDialog");
 			var destFolder = Path.Combine(ApplicationData.Current.LocalFolder.Path, "FilesOpenDialog");
 			Directory.CreateDirectory(destFolder);
 
-			foreach (var file in Directory.GetFiles(Path.Combine(Package.Current.InstalledLocation.Path, "Assets", "FilesOpenDialog")))
+			foreach (var file in Directory.GetFiles(installedAssetsFolder))
 			{
-				if (!SafetyExtensions.IgnoreExceptions(() => File.Copy(file, Path.Combine(destFolder, Path.GetFileName(file)), true), App.Logger))
+				try
 				{
-					// Error copying files
-					await DetectResult();
-					return;
+					await SafeCopyFileAsync(file, Path.Combine(destFolder, Path.GetFileName(file)));
+				}
+				catch (Exception ex)
+				{
+					App.Logger.LogWarning(ex, $"Failed to copy {Path.GetFileName(file)} to destFolder");
 				}
 			}
 
 			var dataPath = Environment.ExpandEnvironmentVariables("%LocalAppData%\\Files");
 			if (IsSetAsDefaultFileManager)
 			{
-				var sourcePath = Path.Combine(destFolder, "*");
-				var branchPath = Path.Combine(dataPath, "Branch.txt");
-				var command = $"-command \"New-Item -Force -Path {Win32Helper.ToPowerShellStringLiteral(dataPath)} -ItemType Directory; Copy-Item -Filter *.* -Path {Win32Helper.ToPowerShellStringLiteral(sourcePath)} -Recurse -Force -Destination {Win32Helper.ToPowerShellStringLiteral(dataPath)}; 'files-dev' | Out-File -Encoding utf8 -Force -FilePath {Win32Helper.ToPowerShellStringLiteral(branchPath)}\"";
-				if (!await Win32Helper.RunPowershellCommandAsync(command, PowerShellExecutionOptions.Hidden))
+				try
 				{
-					// Error copying files
-					await DetectResult();
-					return;
+					Directory.CreateDirectory(dataPath);
+					foreach (var file in Directory.GetFiles(installedAssetsFolder))
+					{
+						await SafeCopyFileAsync(file, Path.Combine(dataPath, Path.GetFileName(file)));
+					}
+					var branchPath = Path.Combine(dataPath, "Branch.txt");
+					await File.WriteAllTextAsync(branchPath, "files-dev", Encoding.UTF8);
+				}
+				catch (Exception ex)
+				{
+					App.Logger.LogWarning(ex, "Failed to copy launcher files to LocalAppData");
 				}
 			}
 			else
 			{
-				await Win32Helper.RunPowershellCommandAsync($"-command \"Remove-Item -LiteralPath {Win32Helper.ToPowerShellStringLiteral(dataPath)} -Recurse -Force\"", PowerShellExecutionOptions.Hidden);
+				try
+				{
+					if (Directory.Exists(dataPath))
+						Directory.Delete(dataPath, true);
+				}
+				catch { }
 			}
 
 			try
 			{
-				using var regProcess = Process.Start(new ProcessStartInfo("regedit.exe", @$"/s ""{Path.Combine(destFolder, IsSetAsDefaultFileManager ? "SetFilesAsDefault.reg" : "UnsetFilesAsDefault.reg")}""") { UseShellExecute = true, Verb = "runas" });
+				var regFilePath = Path.Combine(destFolder, IsSetAsDefaultFileManager ? "SetFilesAsDefault.reg" : "UnsetFilesAsDefault.reg");
+				if (!File.Exists(regFilePath))
+					regFilePath = Path.Combine(installedAssetsFolder, IsSetAsDefaultFileManager ? "SetFilesAsDefault.reg" : "UnsetFilesAsDefault.reg");
+
+				using var regProcess = Process.Start(new ProcessStartInfo("regedit.exe", @$"/s ""{regFilePath}""") { UseShellExecute = true, Verb = "runas" });
 				if (regProcess is not null)
 					await regProcess.WaitForExitAsync();
 			}
@@ -98,6 +115,13 @@ namespace Files.App.ViewModels.Settings
 			}
 
 			await DetectResult();
+		}
+
+		private static async Task SafeCopyFileAsync(string sourcePath, string destinationPath)
+		{
+			await using var sourceStream = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+			await using var destinationStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+			await sourceStream.CopyToAsync(destinationStream);
 		}
 
 		private Task DetectResult()

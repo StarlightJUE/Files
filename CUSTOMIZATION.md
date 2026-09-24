@@ -23,6 +23,7 @@
 | **启动崩溃修复** | `src/Files.App/Helpers/Application/AppLifecycleHelper.cs`<br>`src/Files.App/App.xaml.cs`<br>`src/Files.App/MainWindow.xaml.cs`<br>`src/Files.App/Program.cs` | 修复非 Dev 环境下本地自编译导致的 Sentry `UriFormatException` 黑屏异常；修复 `files-preview:` 协议激活时参数越界崩溃。 |
 | **语言裁剪 (仅保留中文)** | `src/Files.App/Strings/` (删除48个外语目录)<br>`src/Files.Core.SourceGenerator/Generators/StringsPropertyGenerator.cs`<br>`src/Files.App/Strings/zh-Hans/Resources.resw`<br>`src/Files.App/Helpers/Application/AppLanguageHelper.cs`<br>主应用与各相关 `.csproj` | 彻底移除所有非简体中文资源；修改生成器以 `zh-Hans` 生成强类型资源代码；补齐 `zh-Hans` 缺失的两个 Theme 字符串键；默认语言设为 `zh-Hans`。 |
 | **UI去快捷方式箭头** | `src/Files.App.Controls/ThemedIcon/Styles/Icons.Common.xaml`<br>`src/Files.App/Views/Layouts/DetailsLayoutPage.xaml`<br>`src/Files.App/Views/Layouts/GridLayoutPage.xaml`<br>`src/Files.App/Views/Layouts/ColumnLayoutPage.xaml`<br>`src/Files.App/UserControls/NavigationToolbar.xaml` | 隐藏或不加载文件/文件夹左下角快捷方式小箭头，界面更加干净整洁。 |
+| **默认管理器 (Win+E) 修复** | `src/Files.App/Package.appxmanifest`<br>`src/Files.App/ViewModels/Settings/AdvancedViewModel.cs` | 增加 `files-dev.exe` 别名满足官方启动器检查；改用 C# 原生文件 API 落地 Launcher，彻底修复 Win+E 报“未找到应用程序”。 |
 
 ---
 
@@ -117,6 +118,16 @@
      - `src/Files.App/Views/Layouts/GridLayoutPage.xaml`（注意：移除 `x:Phase` 属性，设置 `x:Load="False"`）
      - `src/Files.App/Views/Layouts/ColumnLayoutPage.xaml`
      - `src/Files.App/UserControls/NavigationToolbar.xaml`
+
+---
+
+### 2.5 设为默认文件管理器 (Win+E) 与启动器适配
+- **踩坑 1：按 Win+E 报“未找到应用程序” 与 “无法加密指定的文件”**
+  - **原因**：开启默认文件管理器时，注册表写入指向 `%LocalAppData%\Files\Files.App.Launcher.exe`。原版代码通过 PowerShell 跨目录复制静默失败；后续改用 `File.Copy` 时，由于 Windows MSIX 容器的 `LocalState` 带有隔离加密属性，底层的 Win32 `CopyFileW` 尝试同步加密属性导致抛出 `System.IO.IOException: 无法加密指定的文件`，启动器本体未能落地。
+  - **修复**：在 `AdvancedViewModel.cs` 中改用基于数据流的纯字节复制 (`SafeCopyFileAsync`，`FileStream.CopyToAsync`)，直接从安装包读取明文数据流写入 `%LocalAppData%\Files`，彻底剥离 EFS 加密属性，确保启动器文件 100% 成功写入。
+- **踩坑 2：官方预编译 Launcher 硬编码检测 `files-dev.exe`**
+  - **原因**：官方自带的 `Files.App.Launcher.exe` 是预编译原生 C++ 程序，启动时会检查 `%LOCALAPPDATA%\Microsoft\WindowsApps\files-dev.exe`。若检测失败会弹窗并自动回滚注册表。但我们使用的是 Preview 风格配置，此前只注册了 `files-preview.exe`。
+  - **修复**：在 `Package.appxmanifest` 的 `<uap5:AppExecutionAlias>` 中同时注册 `files-preview.exe`、`files-dev.exe` 和 `files.exe`，满足 Launcher 校验并实现多别名兼容。
 
 ---
 
