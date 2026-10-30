@@ -136,7 +136,7 @@ namespace Files.App.Server
 		public SystemTrayIcon()
 		{
 			var assetFolder = appEnvironment.Contains("preview", StringComparison.Ordinal) ? "Preview"
-				: appEnvironment.Contains("stable", StringComparison.Ordinal) ? "Release" : "Dev";
+				: appEnvironment.Contains("stable", StringComparison.Ordinal) ? "Release" : "Preview";
 			_Icon = new(System.IO.Path.Combine(Package.Current.InstalledPath, "Assets", "AppTiles", assetFolder, "Logo.ico"));
 			_Tooltip = $"{Package.Current.DisplayName}{(Environment.IsPrivilegedProcess ? $" ({resources.GetString("FilesRunningAsAdmin")})" : string.Empty)}";
 			_taskbarRestartMessageId = PInvoke.RegisterWindowMessage("TaskbarCreated");

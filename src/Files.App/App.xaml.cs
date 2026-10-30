@@ -190,7 +190,7 @@ namespace Files.App
 
 				var telemetryInitialization = AppLifecycleHelper.AppEnvironment is AppEnvironment.Dev
 					? Task.CompletedTask
-					: Task.Run(AppLifecycleHelper.ConfigureSentry);
+					: Task.Run(() => SafetyExtensions.IgnoreExceptions(AppLifecycleHelper.ConfigureSentry));
 
 
 				Logger.LogInformation($"App launched. Launch args type: {appActivationArguments.Data.GetType().Name}");

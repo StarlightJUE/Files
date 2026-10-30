@@ -806,25 +806,25 @@ namespace Files.App.Views.Layouts
 
 		private void UpdateColumnLayout()
 		{
-			ColumnsViewModel.IconColumn.UserLength = Column2.Width;
-			ColumnsViewModel.NameColumn.UserLength = Column3.Width;
+			if (Column2.Width.Value > 0) ColumnsViewModel.IconColumn.UserLength = Column2.Width;
+			if (Column3.Width.Value > 0) ColumnsViewModel.NameColumn.UserLength = Column3.Width;
 
 			// Git
-			ColumnsViewModel.GitStatusColumn.UserLength = GitStatusColumnDefinition.Width;
-			ColumnsViewModel.GitLastCommitDateColumn.UserLength = GitLastCommitDateColumnDefinition.Width;
-			ColumnsViewModel.GitLastCommitMessageColumn.UserLength = GitLastCommitMessageColumnDefinition.Width;
-			ColumnsViewModel.GitCommitAuthorColumn.UserLength = GitCommitAuthorColumnDefinition.Width;
-			ColumnsViewModel.GitLastCommitShaColumn.UserLength = GitLastCommitShaColumnDefinition.Width;
+			if (GitStatusColumnDefinition.Width.Value > 0) ColumnsViewModel.GitStatusColumn.UserLength = GitStatusColumnDefinition.Width;
+			if (GitLastCommitDateColumnDefinition.Width.Value > 0) ColumnsViewModel.GitLastCommitDateColumn.UserLength = GitLastCommitDateColumnDefinition.Width;
+			if (GitLastCommitMessageColumnDefinition.Width.Value > 0) ColumnsViewModel.GitLastCommitMessageColumn.UserLength = GitLastCommitMessageColumnDefinition.Width;
+			if (GitCommitAuthorColumnDefinition.Width.Value > 0) ColumnsViewModel.GitCommitAuthorColumn.UserLength = GitCommitAuthorColumnDefinition.Width;
+			if (GitLastCommitShaColumnDefinition.Width.Value > 0) ColumnsViewModel.GitLastCommitShaColumn.UserLength = GitLastCommitShaColumnDefinition.Width;
 
-			ColumnsViewModel.TagColumn.UserLength = Column4.Width;
-			ColumnsViewModel.PathColumn.UserLength = Column5.Width;
-			ColumnsViewModel.OriginalPathColumn.UserLength = Column6.Width;
-			ColumnsViewModel.DateDeletedColumn.UserLength = Column7.Width;
-			ColumnsViewModel.DateModifiedColumn.UserLength = Column8.Width;
-			ColumnsViewModel.DateCreatedColumn.UserLength = Column9.Width;
-			ColumnsViewModel.ItemTypeColumn.UserLength = Column10.Width;
-			ColumnsViewModel.SizeColumn.UserLength = Column11.Width;
-			ColumnsViewModel.StatusColumn.UserLength = Column12.Width;
+			if (Column4.Width.Value > 0) ColumnsViewModel.TagColumn.UserLength = Column4.Width;
+			if (Column5.Width.Value > 0) ColumnsViewModel.PathColumn.UserLength = Column5.Width;
+			if (Column6.Width.Value > 0) ColumnsViewModel.OriginalPathColumn.UserLength = Column6.Width;
+			if (Column7.Width.Value > 0) ColumnsViewModel.DateDeletedColumn.UserLength = Column7.Width;
+			if (Column8.Width.Value > 0) ColumnsViewModel.DateModifiedColumn.UserLength = Column8.Width;
+			if (Column9.Width.Value > 0) ColumnsViewModel.DateCreatedColumn.UserLength = Column9.Width;
+			if (Column10.Width.Value > 0) ColumnsViewModel.ItemTypeColumn.UserLength = Column10.Width;
+			if (Column11.Width.Value > 0) ColumnsViewModel.SizeColumn.UserLength = Column11.Width;
+			if (Column12.Width.Value > 0) ColumnsViewModel.StatusColumn.UserLength = Column12.Width;
 		}
 
 		private void RootGrid_SizeChanged(object? sender, SizeChangedEventArgs? e)
@@ -944,35 +944,32 @@ namespace Files.App.Views.Layouts
 
 			var columnSizeToFit = MeasureColumnEstimate(columnToResize, 5, maxItemLength);
 
-			if (columnSizeToFit > 1)
+			var column = columnToResize switch
 			{
-				var column = columnToResize switch
-				{
-					2 => ColumnsViewModel.NameColumn,
-					3 => ColumnsViewModel.GitStatusColumn,
-					4 => ColumnsViewModel.GitLastCommitDateColumn,
-					5 => ColumnsViewModel.GitLastCommitMessageColumn,
-					6 => ColumnsViewModel.GitCommitAuthorColumn,
-					7 => ColumnsViewModel.GitLastCommitShaColumn,
-					8 => ColumnsViewModel.TagColumn,
-					9 => ColumnsViewModel.PathColumn,
-					10 => ColumnsViewModel.OriginalPathColumn,
-					11 => ColumnsViewModel.DateDeletedColumn,
-					12 => ColumnsViewModel.DateModifiedColumn,
-					13 => ColumnsViewModel.DateCreatedColumn,
-					14 => ColumnsViewModel.ItemTypeColumn,
-					15 => ColumnsViewModel.SizeColumn,
-					_ => ColumnsViewModel.StatusColumn
-				};
+				2 => ColumnsViewModel.NameColumn,
+				3 => ColumnsViewModel.GitStatusColumn,
+				4 => ColumnsViewModel.GitLastCommitDateColumn,
+				5 => ColumnsViewModel.GitLastCommitMessageColumn,
+				6 => ColumnsViewModel.GitCommitAuthorColumn,
+				7 => ColumnsViewModel.GitLastCommitShaColumn,
+				8 => ColumnsViewModel.TagColumn,
+				9 => ColumnsViewModel.PathColumn,
+				10 => ColumnsViewModel.OriginalPathColumn,
+				11 => ColumnsViewModel.DateDeletedColumn,
+				12 => ColumnsViewModel.DateModifiedColumn,
+				13 => ColumnsViewModel.DateCreatedColumn,
+				14 => ColumnsViewModel.ItemTypeColumn,
+				15 => ColumnsViewModel.SizeColumn,
+				_ => ColumnsViewModel.StatusColumn
+			};
 
-				if (columnToResize == 2) // file name column
-					columnSizeToFit += 20;
+			if (columnToResize == 2) // file name column
+				columnSizeToFit += 20;
 
-				var minFitLength = Math.Max(columnSizeToFit, column.NormalMinLength);
-				var maxFitLength = Math.Min(minFitLength + 36, column.NormalMaxLength); // 36 to account for SortIcon & padding
+			var minFitLength = Math.Max(columnSizeToFit, column.NormalMinLength);
+			var maxFitLength = Math.Min(minFitLength + 36, column.NormalMaxLength); // 36 to account for SortIcon & padding
 
-				column.UserLength = new GridLength(maxFitLength, GridUnitType.Pixel);
-			}
+			column.UserLength = new GridLength(maxFitLength, GridUnitType.Pixel);
 
 			var folderSettings = FolderSettings
 				?? throw new InvalidOperationException("The details layout does not have folder settings.");
@@ -981,8 +978,8 @@ namespace Files.App.Views.Layouts
 
 		private double MeasureColumnEstimate(int columnIndex, int measureItemsCount, int maxItemLength)
 		{
-			if (columnIndex == 15) // sync status
-				return maxItemLength;
+			if (columnIndex == 16) // sync status
+				return 50;
 
 			if (columnIndex == 8) // file tag
 				return MeasureTagColumnEstimate(columnIndex);

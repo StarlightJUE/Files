@@ -1,6 +1,8 @@
 // Copyright (c) Files Community
 // Licensed under the MIT License.
 
+using System.Runtime.CompilerServices;
+
 namespace Files.App.Services.Settings
 {
 	internal sealed partial class LayoutSettingsService : BaseObservableJsonSettings, ILayoutSettingsService
@@ -65,150 +67,106 @@ namespace Files.App.Services.Settings
 			set => Set((long)value);
 		}
 
+		private double GetColumnWidth(double defaultValue, [CallerMemberName] string propertyName = "")
+		{
+			var val = Get(defaultValue, propertyName);
+			return val <= 10d ? defaultValue : val;
+		}
+
+		private void SetColumnWidth(double value, bool condition = true, double minWidth = 50d, [CallerMemberName] string propertyName = "")
+		{
+			if (condition)
+				Set(Math.Max(minWidth, value), propertyName);
+		}
+
 		public double GitStatusColumnWidth
 		{
-			get => Get(80d);
-			set
-			{
-				if (ShowGitStatusColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(80d);
+			set => SetColumnWidth(value, ShowGitStatusColumn);
 		}
 
 		public double GitLastCommitDateColumnWidth
 		{
-			get => Get(140d);
-			set
-			{
-				if (ShowGitLastCommitDateColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(140d);
+			set => SetColumnWidth(value, ShowGitLastCommitDateColumn);
 		}
 
 		public double GitLastCommitMessageColumnWidth
 		{
-			get => Get(140d);
-			set
-			{
-				if (ShowGitLastCommitMessageColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(140d);
+			set => SetColumnWidth(value, ShowGitLastCommitMessageColumn);
 		}
 
 		public double GitCommitAuthorColumnWidth
 		{
-			get => Get(140d);
-			set
-			{
-				if (ShowGitCommitAuthorColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(140d);
+			set => SetColumnWidth(value, ShowGitCommitAuthorColumn);
 		}
 
 		public double GitLastCommitShaColumnWidth
 		{
-			get => Get(80d);
-			set
-			{
-				if (ShowGitLastCommitShaColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(80d);
+			set => SetColumnWidth(value, ShowGitLastCommitShaColumn);
 		}
 
 		public double TagColumnWidth
 		{
-			get => Get(140d);
-			set
-			{
-				if (ShowFileTagColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(140d);
+			set => SetColumnWidth(value, ShowFileTagColumn);
 		}
 
 		public double NameColumnWidth
 		{
-			get => Get(240d);
-			set => Set(value);
+			get => GetColumnWidth(240d);
+			set => SetColumnWidth(value, minWidth: 80d);
 		}
 
 		public double DateModifiedColumnWidth
 		{
-			get => Get(200d);
-			set
-			{
-				if (ShowDateColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(200d);
+			set => SetColumnWidth(value, ShowDateColumn);
 		}
 
 		public double TypeColumnWidth
 		{
-			get => Get(140d);
-			set
-			{
-				if (ShowTypeColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(140d);
+			set => SetColumnWidth(value, ShowTypeColumn);
 		}
 
 		public double DateCreatedColumnWidth
 		{
-			get => Get(200d);
-			set
-			{
-				if (ShowDateCreatedColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(200d);
+			set => SetColumnWidth(value, ShowDateCreatedColumn);
 		}
 
 		public double SizeColumnWidth
 		{
-			get => Get(100d);
-			set
-			{
-				if (ShowSizeColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(100d);
+			set => SetColumnWidth(value, ShowSizeColumn);
 		}
 
 		public double DateDeletedColumnWidth
 		{
-			get => Get(200d);
-			set
-			{
-				if (ShowDateDeletedColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(200d);
+			set => SetColumnWidth(value, ShowDateDeletedColumn);
 		}
 
 		public double PathColumnWidth
 		{
-			get => Get(200d);
-			set
-			{
-				if (ShowPathColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(200d);
+			set => SetColumnWidth(value, ShowPathColumn);
 		}
 
 		public double OriginalPathColumnWidth
 		{
-			get => Get(200d);
-			set
-			{
-				if (ShowOriginalPathColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(200d);
+			set => SetColumnWidth(value, ShowOriginalPathColumn);
 		}
 
 		public double SyncStatusColumnWidth
 		{
-			get => Get(50d);
-			set
-			{
-				if (ShowSyncStatusColumn)
-					Set(value);
-			}
+			get => GetColumnWidth(50d);
+			set => SetColumnWidth(value, ShowSyncStatusColumn, minWidth: 30d);
 		}
 
 		public bool ShowDateColumn

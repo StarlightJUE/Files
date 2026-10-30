@@ -1,4 +1,4 @@
-// Copyright (c) Files Community
+﻿// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using Microsoft.UI.Input;
@@ -98,6 +98,7 @@ namespace Files.App.ViewModels.UserControls.Widgets
 				var folders = await STATask.RunPooled(() =>
 				{
 					List<FolderSnapshot> result = [];
+					HashSet<string> seenKeys = new(StringComparer.OrdinalIgnoreCase);
 					// The Shell enumerator and its metadata reads stay on this persistent STA.
 					foreach (IWindowsStorable folder in homeFolder.GetQuickAccessFolderAsync().ToBlockingEnumerable())
 					{
@@ -107,6 +108,9 @@ namespace Files.App.ViewModels.UserControls.Widgets
 							folder.TryGetShellTooltip(out var tooltip);
 							var text = folder.GetDisplayName(SIGDN.SIGDN_PARENTRELATIVEFORUI);
 							var path = folder.GetDisplayName(SIGDN.SIGDN_DESKTOPABSOLUTEPARSING);
+							var key = !string.IsNullOrEmpty(path) ? path : folder.Id;
+							if (!string.IsNullOrEmpty(key) && !seenKeys.Add(key))
+								continue;
 							var hr = PInvoke.RoGetAgileReference(AgileReferenceOptions.AGILEREFERENCE_DEFAULT, typeof(IShellItem).GUID, folder.ThisPtr, out IAgileReference shellItem);
 							if (hr.ThrowIfFailedOnDebug().Failed)
 								continue;

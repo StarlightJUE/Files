@@ -275,7 +275,7 @@
 										Height="10"
 										HorizontalAlignment="Left"
 										VerticalAlignment="Bottom"
-										Visibility="{x:Bind IsShortcut}">
+										Visibility="Collapsed">
 										<controls:ThemedIcon Style="{StaticResource App.ThemedIcons.Shortcut}" />
 									</Viewbox>
 									<Image

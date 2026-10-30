@@ -137,8 +137,7 @@
 							Margin="14"
 							HorizontalAlignment="Left"
 							VerticalAlignment="Bottom"
-							x:Load="{x:Bind IsShortcut}"
-							x:Phase="1">
+							x:Load="False">
 							<controls:ThemedIcon
 								Width="12"
 								Height="12"
@@ -321,7 +320,7 @@
 								Height="10"
 								HorizontalAlignment="Left"
 								VerticalAlignment="Bottom"
-								x:Load="{x:Bind IsShortcut}">
+								x:Load="False">
 								<controls:ThemedIcon Style="{StaticResource App.ThemedIcons.Shortcut}" />
 							</Viewbox>
 							<Image
@@ -465,8 +464,7 @@
 								Margin="8"
 								HorizontalAlignment="Right"
 								VerticalAlignment="Top"
-								x:Load="{x:Bind IsShortcut}"
-								x:Phase="1">
+								x:Load="False">
 								<controls:ThemedIcon
 									Width="12"
 									Height="12"

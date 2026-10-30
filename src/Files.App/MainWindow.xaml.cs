@@ -1,4 +1,4 @@
-// Copyright (c) Files Community
+﻿// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using Microsoft.Extensions.Logging;
@@ -112,6 +112,10 @@ namespace Files.App
 					if (launchArgs.Arguments is not null &&
 						(CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-dev.exe", StringComparison.OrdinalIgnoreCase)
 						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-dev", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-preview.exe", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files-preview", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files.exe", StringComparison.OrdinalIgnoreCase)
+						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].EndsWith($"files", StringComparison.OrdinalIgnoreCase)
 						|| CommandLineParser.SplitArguments(launchArgs.Arguments, true)[0].Equals(Path.Join(Package.Current.InstalledPath, "Files.exe"), StringComparison.OrdinalIgnoreCase)))
 					{
 						// WINUI3: When launching from commandline the argument is not ICommandLineActivatedEventArgs (#10370)
@@ -141,7 +145,10 @@ namespace Files.App
 					break;
 
 				case IProtocolActivatedEventArgs eventArgs:
-					if (eventArgs.Uri.AbsoluteUri == "files-dev:")
+					if (string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files-dev:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files-preview:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query) ||
+						eventArgs.Uri.AbsoluteUri.StartsWith("files:", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(eventArgs.Uri.Query))
 					{
 						rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
 
@@ -154,6 +161,11 @@ namespace Files.App
 					else
 					{
 						var parsedArgs = eventArgs.Uri.Query.TrimStart('?').Split('=');
+						if (parsedArgs.Length < 2)
+						{
+							rootFrame.Navigate(typeof(MainPage), null, new SuppressNavigationTransitionInfo());
+							break;
+						}
 						var unescapedValue = Uri.UnescapeDataString(parsedArgs[1].Split('&')[0]);
 						if (parsedArgs[0] == "tab" && parsedArgs.Length > 3 &&
 							int.TryParse(parsedArgs[2].Split('&')[0], out var dx) &&
@@ -358,7 +370,7 @@ namespace Files.App
 				{
 					LeftPaneNavPathParam = payload,
 					LeftPaneSelectItemParam = selectItem,
-					RightPaneNavPathParam = boundsWidth > Constants.UI.MultiplePaneWidthThreshold && (generalSettingsService?.AlwaysOpenDualPaneInNewTab ?? false) ? "Home" : null,
+					RightPaneNavPathParam = (boundsWidth == 0 || boundsWidth > Constants.UI.MultiplePaneWidthThreshold) && (generalSettingsService?.AlwaysOpenDualPaneInNewTab ?? false) ? "Home" : null,
 				};
 
 				if (rootFrame.Content is MainPage && MainPageViewModel.AppInstances.Any())

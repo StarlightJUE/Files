@@ -1,4 +1,4 @@
-// Copyright (c) Files Community
+﻿// Copyright (c) Files Community
 // Licensed under the MIT License.
 
 using Windows.ApplicationModel;
@@ -259,6 +259,7 @@ namespace Files.App
 				"FilesPreview", // sideload preview
 				"49306atecsolution.FilesPreview", // store preview
 				"FilesDev", // dev
+				"StarlightFiles", // custom sideload
 			};
 		}
 
